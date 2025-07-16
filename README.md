@@ -27,7 +27,7 @@ SpamMailD, gelen e-postaları **spam**, **virüs**, **başlık-gövde tutarsızl
 ---
 
 ## 📁 Proje Yapısı
-
+```bash
 ├── app/
 │ ├── authentication.py # SPF, DKIM, DMARC kontrolü
 │ ├── clamav_scanner.py # ClamAV virüs tarayıcı
@@ -43,6 +43,7 @@ SpamMailD, gelen e-postaları **spam**, **virüs**, **başlık-gövde tutarsızl
 ├── Dockerfile # Docker imajı yapılandırması
 ├── run.py # Flask uygulama başlatıcı script
 └── .env # Ortam değişkenleri (API anahtarları, e-posta bilgileri)
+```
 ---
 
 ## 🐍 Kurulum

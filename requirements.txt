@@ -1,0 +1,7 @@
+Flask
+nltk
+langdetect
+requests
+python-dotenv
+chardet
+scikit-learn

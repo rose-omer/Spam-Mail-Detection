@@ -45,6 +45,9 @@ SpamMailD, gelen e-postaları **spam**, **virüs**, **başlık-gövde tutarsızl
 └── .env # Ortam değişkenleri (API anahtarları, e-posta bilgileri)
 ```
 ---
+## Ekran Görüntüsü 
+<img width="1818" height="820" alt="image" src="https://github.com/user-attachments/assets/1912cc65-ab53-460e-a475-3980d7eda648" />
+<img width="988" height="447" alt="image" src="https://github.com/user-attachments/assets/e7b2ddbd-deee-44dc-9e5f-7328b258c2b9" />
 
 ## 🐍 Kurulum
 

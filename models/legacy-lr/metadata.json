@@ -1,0 +1,25 @@
+{
+  "name": "legacy-lr",
+  "version": "1.0.0-legacy",
+  "description": "Staj sürümündeki LogisticRegression modelleri (TR: TF-IDF, EN: Count).",
+  "trained_with": {
+    "scikit-learn": "1.2.2"
+  },
+  "converted_with": {
+    "scikit-learn": "1.9.1",
+    "skops": "0.16.0"
+  },
+  "preprocessing": "Türkçe harfler ASCII'ye katlanır (ç→c, ğ→g, ı→i, ö→o, ş→s, ü→u).",
+  "training_data": "bilinmiyor (repoda eğitim kodu ve veri yok)",
+  "metrics": null,
+  "files": {
+    "tr": {
+      "file": "tr.skops",
+      "sha256": "0edcc8404068049479e3d30e9e1d3eb4dfebcc43e6c3f9bea78dd8e8bdce708e"
+    },
+    "en": {
+      "file": "en.skops",
+      "sha256": "5cc8ef60a7675eeb5d10624e9d6ebaaeace96916e26d647f32c270d82afaf683"
+    }
+  }
+}

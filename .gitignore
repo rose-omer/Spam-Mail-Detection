@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Ortam ve gizli bilgiler
+.env
+.env.*
+!.env.example
+
+# Eğitim verisi ve ara çıktılar
+data/
+models/*/checkpoints/
+model/*.pkl
+*.onnx
+
+# Editör ve sistem
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

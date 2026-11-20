@@ -1,0 +1,18 @@
+From: Muhasebe <muhasebe@tedarikci.example>
+To: kurban@example.com
+Subject: Fatura
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="m1"
+
+--m1
+Content-Type: text/plain; charset="utf-8"
+
+Ekte kasım ayı faturanız var.
+
+--m1
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="fatura.pdf.exe"
+Content-Transfer-Encoding: base64
+
+YnUgZ2Vyw6dlayBiaXIgZXhlIGRlxJ9pbCwgdGVzdCBpw6dpbiB5YXrEsSBkb3N5YXPEsQ==
+--m1--

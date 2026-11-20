@@ -1,0 +1,36 @@
+Authentication-Results: mx.google.com;
+       spf=fail (google.com: domain of bildirim@garanti-guvenlik.example does not designate 203.0.113.66 as permitted sender) smtp.mailfrom=bildirim@garanti-guvenlik.example;
+       dkim=pass header.d=bulk-mailer.example header.s=k1;
+       dmarc=fail (p=NONE) header.from=garanti-guvenlik.example
+X-Note: spf=pass dkim=pass dmarc=pass
+From: Garanti BBVA Güvenlik <bildirim@garanti-guvenlik.example>
+To: musteri@example.com
+Subject: =?utf-8?q?Hesab=C4=B1n=C4=B1z_ge=C3=A7ici_olarak_ask=C4=B1ya_al=C4=B1nd=C4=B1?=
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="g0"
+
+--g0
+Content-Type: multipart/alternative; boundary="g1"
+
+--g1
+Content-Type: text/plain; charset="utf-8"
+
+Sayın müşterimiz, hesabınız güvenlik nedeniyle askıya alındı.
+Kimlik doğrulaması için hemen bağlantıya tıklayın ve şifrenizi girin.
+
+--g1
+Content-Type: text/html; charset="utf-8"
+
+<p>Sayın müşterimiz, hesabınız güvenlik nedeniyle askıya alındı.</p>
+<p>Kimlik doğrulaması için hemen bağlantıya tıklayın:
+<a href="http://garantibbva.com.tr.hesap-dogrula.example/giris">www.garantibbva.com.tr</a></p>
+<p>Sorularınız için <a href="http://198.51.100.23/destek">müşteri hizmetleri</a>.</p>
+--g1--
+
+--g0
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="hesap_ozeti.pdf.exe"
+Content-Transfer-Encoding: base64
+
+YnUgZ2Vyw6dlayBiaXIgZXhlIGRlxJ9pbCwgw7ZybmVrIGRvc3lhZMSxcg==
+--g0--

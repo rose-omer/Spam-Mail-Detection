@@ -1,0 +1,44 @@
+# Çalıştırma: cp .env.example .env  (API_KEY doldurun)  &&  docker compose up --build
+# Panel: http://127.0.0.1:8100  (8000 bu makinede başka servise ait)
+services:
+  api:
+    build: .
+    env_file: .env
+    environment:
+      API_KEY: ${API_KEY:?API_KEY tanımlı olmalı}
+      CLAMD_HOST: clamav
+      CLAMD_PORT: "3310"
+    ports:
+      - "127.0.0.1:8100:8100"
+    depends_on:
+      clamav:
+        condition: service_healthy
+    networks: [internal, public]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+
+  clamav:
+    image: clamav/clamav:1.5.5
+    volumes:
+      - clamav-db:/var/lib/clamav
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    restart: unless-stopped
+
+networks:
+  internal:
+    internal: true
+  public: {}
+
+volumes:
+  clamav-db:

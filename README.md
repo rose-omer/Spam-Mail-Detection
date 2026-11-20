@@ -19,14 +19,20 @@ Bu proje, **EMAR Proje** şirketinde gerçekleştirdiğim staj süresince geliş
 Projede, staj sorumlusu **Mehmet Emre Doğan**’ın verdiği onaylar ve yönlendirmeler doğrultusunda
 ilerlenmiş ve tamamlanmıştır. Sürüm 2 aynı fikri güvenli ve testli bir servise taşır.
 
-## Panel
+## Ekran görüntüleri
 
-| Temiz | Spam | Sahte banka |
-|---|---|---|
-| ![Temiz mail sonucu](docs/screenshots/panel-temiz.jpg) | ![Spam mail sonucu](docs/screenshots/panel-spam.jpg) | ![Sahte banka maili sonucu](docs/screenshots/panel-sahte-banka.jpg) |
+Görüntüler demo kipinde, uygulamanın kendi örnek mailleriyle alındı. Dış servisler (ClamAV, VirusTotal) bu kipte kapalı.
 
-Panel tek sayfadır (Jinja2 şablonu ve küçük bir vanilla JS dosyası; derleme adımı yok).
-Açık ve koyu tema sistem ayarından seçilir. 375 px genişlikte tek sütuna iner.
+| | |
+|---|---|
+| ![Boş panel](docs/ekran/1-mail-bekleniyor.png)<br>Boş panel | ![Sahte banka maili: oltalama kararı](docs/ekran/2-sahte-banka-sonucu.png)<br>Sahte banka maili: oltalama kararı |
+| ![Temiz mail](docs/ekran/3-temiz-sonucu.png)<br>Temiz mail | ![Koyu tema](docs/ekran/4-koyu-tema.png)<br>Koyu tema |
+
+## Kullanım
+
+![Kullanım akışı](docs/ekran/kullanim.gif)
+
+Mail yapıştırılır ya da .eml dosyası seçilir. Panel kararı, puanı ve kararı belirleyen üç nedeni gösterir.
 
 ## Mimari
 

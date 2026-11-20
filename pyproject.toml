@@ -44,7 +44,7 @@ build-backend = "setuptools.build_meta"
 include = ["spammaild*"]
 
 [tool.setuptools.package-data]
-spammaild = ["web/templates/*.html", "web/static/*", "web/static/samples/*"]
+spammaild = ["web/templates/*.html", "web/static/*", "web/static/samples/*", "web/static/fonts/*"]
 
 [tool.ruff]
 line-length = 100

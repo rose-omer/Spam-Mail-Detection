@@ -172,7 +172,13 @@ def test_panel_and_docs(make_client):
     panel = client.get("/")
     assert panel.status_code == 200
     assert "default-src 'self'" in panel.headers["content-security-policy"]
-    assert 'aria-live="polite"' in panel.text
+    # Sonuç, odak başlığa geçerek duyurulur; ayrıca canlı bölge olursa ekran okuyucu iki kez okur.
+    assert 'id="sonuc-baslik"' in panel.text
+    assert 'tabindex="-1"' in panel.text
+    assert "aria-live" not in panel.text
     assert client.get("/static/app.js").status_code == 200
+    # Fontlar sunucuyla gelir; CSP font-src 'self' dış kaynağa izin vermez.
+    for font in ("big-shoulders-display-latin-900-normal", "archivo-latin-wght-normal"):
+        assert client.get(f"/static/fonts/{font}.woff2").status_code == 200
     assert client.get("/docs").status_code == 200
     assert "/v1/analyze" in client.get("/openapi.json").json()["paths"]

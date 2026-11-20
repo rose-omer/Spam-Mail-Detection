@@ -6,134 +6,101 @@
   <meta name="color-scheme" content="light dark">
   <title>Mail analizi – SpamMailD</title>
   <link rel="icon" href="{{ url_for('static', path='favicon.svg') }}" type="image/svg+xml">
+  <link rel="preload" href="{{ url_for('static', path='fonts/big-shoulders-display-latin-900-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', path='fonts/archivo-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
   <script src="{{ url_for('static', path='theme.js') }}?v={{ version }}"></script>
   <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
   <script src="{{ url_for('static', path='app.js') }}?v={{ version }}" defer></script>
 </head>
 <body>
-  <svg class="sprite" aria-hidden="true" focusable="false">
-    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
-    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
-    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4"/><path d="M12 16.8v.2"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5l8.5 15h-17z"/><path d="M12 10v4"/><path d="M12 16.8v.2"/></symbol>
-    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3.5H7.5a1.5 1.5 0 0 0-1.5 1.5v14a1.5 1.5 0 0 0 1.5 1.5h9a1.5 1.5 0 0 0 1.5-1.5V7.5z"/><path d="M14 3.5v4h4"/></symbol>
-    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 18V6M7 11l5-5 5 5"/></symbol>
-    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 6v12M7 13l5 5 5-5"/></symbol>
-    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></symbol>
-    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9" rx="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
-  </svg>
-
   <a class="skip" href="#sonuc-baslik">Sonuca geç</a>
 
-  <header class="topbar">
-    <div class="topbar__brand">
-      <svg class="mark" viewBox="0 0 32 20" aria-hidden="true" focusable="false">
-        <rect class="mark__seg mark__seg--clean" x="1" y="12" width="10" height="5" rx="1"/>
-        <rect class="mark__seg mark__seg--warn" x="12" y="12" width="8" height="5" rx="1"/>
-        <rect class="mark__seg mark__seg--risk" x="21" y="12" width="10" height="5" rx="1"/>
-        <path class="mark__pin" d="M24 1.5h4l-2 3.5z M26 4.5v14"/>
-      </svg>
-      <span class="wordmark">SpamMail<span class="wordmark__d">D</span></span>
-      <span class="topbar__desc">Mail risk analizi</span>
-    </div>
-    <ul class="topbar__status" id="durum" aria-label="Servis durumu"></ul>
-    <fieldset class="theme" id="tema">
-      <legend class="visually-hidden">Tema</legend>
-      <input type="radio" name="tema" id="tema-sistem" value="system" checked>
-      <label for="tema-sistem">Sistem</label>
-      <input type="radio" name="tema" id="tema-acik" value="light">
-      <label for="tema-acik">Açık</label>
-      <input type="radio" name="tema" id="tema-koyu" value="dark">
-      <label for="tema-koyu">Koyu</label>
-    </fieldset>
-    <a class="topbar__link" href="/docs">API belgeleri</a>
-  </header>
+  <header class="masthead" id="birakma-alani">
+    <div class="masthead__inner">
+      <form id="analiz-formu" class="intake" novalidate aria-labelledby="marka">
+        <h1 id="marka" class="brand">SpamMailD</h1>
 
-  <main class="layout">
-    <section class="pane pane--input" aria-labelledby="giris-baslik">
-      <h1 id="giris-baslik" class="pane__title">Maili analiz et</h1>
-      <p class="pane__lead">Ham maili başlıklarıyla birlikte yapıştırın ya da <code>.eml</code> dosyası seçin.</p>
-
-      <form id="analiz-formu" class="form" novalidate>
-        <div class="field" id="anahtar-alani" hidden>
+        <div class="intake__key" id="anahtar-alani" hidden>
           <label for="api-anahtari">API anahtarı</label>
           <input id="api-anahtari" name="api-anahtari" type="password" autocomplete="off" spellcheck="false" aria-describedby="anahtar-yardim">
-          <p class="hint" id="anahtar-yardim">Sunucu <code>X-API-Key</code> istiyor. Anahtar yalnız bu sekmede tutulur.</p>
+          <span class="visually-hidden" id="anahtar-yardim">Sunucu X-API-Key istiyor. Anahtar yalnız bu sekmede tutulur.</span>
         </div>
 
-        <div class="field">
-          <label for="ham-mail">Ham maili yapıştır</label>
-          <textarea id="ham-mail" name="ham-mail" rows="12" spellcheck="false" aria-describedby="ham-yardim" placeholder="From: ...&#10;Subject: ...&#10;&#10;Mail gövdesi"></textarea>
-          <p class="hint" id="ham-yardim">Başlıklar da gerekli: kimlik doğrulama sonuçları oradan okunur. Göndermek için Ctrl + Enter.</p>
-        </div>
+        <label for="ham-mail" class="visually-hidden">Ham maili yapıştır</label>
+        <textarea id="ham-mail" name="ham-mail" rows="1" spellcheck="false" aria-describedby="ham-yardim" placeholder="Ham maili başlıklarıyla yapıştırın"></textarea>
 
-        <div class="drop" id="birakma-alani">
-          <svg class="icon icon--muted" aria-hidden="true"><use href="#i-file"/></svg>
-          <div class="drop__text">
-            <p class="drop__title" id="dosya-durumu">.eml dosyasını buraya bırakın</p>
-            <p class="hint">ya da dosyayı seçin. En çok <span id="azami-boyut">70</span> MB.</p>
-          </div>
-          <input id="dosya" name="dosya" type="file" accept=".eml,message/rfc822" class="visually-hidden" tabindex="-1" aria-hidden="true">
-          <button type="button" class="btn btn--quiet" id="dosya-sec">Dosya seç</button>
-          <button type="button" class="btn btn--quiet" id="dosya-kaldir" hidden>Dosyayı kaldır</button>
-        </div>
-
-        <fieldset class="samples">
-          <legend>Örnek mail ile dene</legend>
-          <div class="samples__row">
-            <button type="button" class="btn btn--chip" data-sample="temiz">Temiz</button>
-            <button type="button" class="btn btn--chip" data-sample="spam">Spam</button>
-            <button type="button" class="btn btn--chip" data-sample="sahte-banka">Sahte banka</button>
-          </div>
-        </fieldset>
-
-        <div class="form__actions">
-          <button type="submit" class="btn btn--primary" id="analiz-et">Analiz et</button>
-          <p class="form__error" id="form-hatasi" role="alert"></p>
-        </div>
+        <input id="dosya" name="dosya" type="file" accept=".eml,message/rfc822" class="visually-hidden" tabindex="-1" aria-hidden="true">
+        <button type="button" class="btn" id="dosya-sec">.eml seç</button>
+        <button type="button" class="btn" id="dosya-kaldir" hidden>Dosyayı kaldır</button>
+        <button type="submit" class="btn btn--primary" id="analiz-et">Analiz et</button>
+        <a class="masthead__docs" href="/docs">API belgeleri</a>
       </form>
 
-      <aside class="privacy" id="gizlilik" aria-label="Gizlilik">
-        <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
-        <p id="gizlilik-metni">Yapıştırılan mail sunucuda saklanmaz. Bağlantılar açılmaz ve indirilmez. VirusTotal'a dosya yüklenmez.</p>
-      </aside>
-    </section>
+      <div class="masthead__sub">
+        <fieldset class="samples">
+          <legend>Örnek mail</legend>
+          <button type="button" class="btn btn--small" data-sample="temiz">Temiz</button>
+          <button type="button" class="btn btn--small" data-sample="spam">Spam</button>
+          <button type="button" class="btn btn--small" data-sample="sahte-banka">Sahte banka</button>
+        </fieldset>
+        <p class="hint" id="ham-yardim"><span id="dosya-durumu" hidden></span> Başlıklar gerekli. En çok <span id="azami-boyut">70</span> MB.<span class="hint__more"> Kimlik doğrulama sonuçları başlıklardan okunur. <span lang="en">.eml</span> dosyasını bu alana bırakabilirsiniz. Göndermek için Ctrl + Enter.</span></p>
+      </div>
 
-    <section class="pane pane--result" aria-labelledby="sonuc-baslik">
-      <h2 id="sonuc-baslik" class="pane__title" tabindex="-1">Sonuç</h2>
-      <div id="sonuc" aria-live="polite" aria-busy="false">
-        <div class="empty" id="bos-durum">
-          <p class="empty__title">Henüz analiz yok</p>
-          <p>Mail dört bölümde ayrı ayrı puanlanır. Bulgular tek bir 0–100 risk skorunda toplanır ve skor bir banda düşer.</p>
-          <ol class="bands" aria-label="Risk bantları">
-            <li class="bands__item" data-band="clean"><span class="bands__bar"></span><span class="bands__name">Temiz</span><span class="bands__range">0–34</span></li>
-            <li class="bands__item" data-band="suspicious"><span class="bands__bar"></span><span class="bands__name">Şüpheli</span><span class="bands__range">35–64</span></li>
-            <li class="bands__item" data-band="spam"><span class="bands__bar"></span><span class="bands__name">Spam / phishing</span><span class="bands__range">65–100</span></li>
-          </ol>
-          <dl class="empty__list">
-            <div><dt>İçerik</dt><dd>Metin modelinin spam olasılığı ve öne çıkan terimler.</dd></div>
-            <div><dt>Kimlik</dt><dd>Güvenilen sunucunun SPF, DKIM ve DMARC sonuçları.</dd></div>
-            <div><dt>URL</dt><dd>Görünen metin ile gerçek hedef, IP, punycode ve kısaltıcılar.</dd></div>
-            <div><dt>Ek</dt><dd>Gerçek dosya türü, çift uzantı, makro ve tarayıcı sonuçları.</dd></div>
-          </dl>
-          <div class="empty__cta">
-            <button type="button" class="btn btn--quiet" id="ornek-dene">Sahte banka örneğini analiz et</button>
-            <p class="hint">Kendi mailiniz için soldaki alanı kullanın.</p>
+      <p class="form-error" id="form-hatasi" role="alert"></p>
+      <p class="upload-warning" id="yukleme-uyarisi" role="note" hidden></p>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div id="sonuc" aria-busy="false">
+      <section class="verdict" data-state="empty" aria-labelledby="sonuc-baslik">
+        <div class="wrap">
+          <p class="verdict__from">Henüz analiz yok.</p>
+          <h2 id="sonuc-baslik" class="verdict__title verdict__title--state" tabindex="-1">Mail bekleniyor</h2>
+          <div class="verdict__row">
+            <p class="verdict__advice">Maili yukarıdaki alana yapıştırın ya da <span lang="en">.eml</span> dosyası seçin. Bulgular tek bir 0–100 risk skorunda toplanır ve skor üç banttan birine düşer.</p>
           </div>
+          <ol class="scale" aria-label="Risk bantları">
+            <li>Temiz 0–34</li>
+            <li>Şüpheli 35–64</li>
+            <li>Spam / phishing 65–100</li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="wrap findings">
+        <section aria-labelledby="h-bolumler">
+          <h3 id="h-bolumler" class="display-head">Mail dört bölümde puanlanır</h3>
+          <dl class="columns">
+            <div class="column"><dt class="column__lead">İçerik</dt><dd>Metin modelinin spam olasılığı ve öne çıkan terimler.</dd></div>
+            <div class="column"><dt class="column__lead">Kimlik</dt><dd>Güvenilen sunucunun SPF, DKIM ve DMARC sonuçları.</dd></div>
+            <div class="column"><dt class="column__lead">URL</dt><dd>Görünen metin ile gerçek hedef, IP adresi, punycode ve kısaltıcılar.</dd></div>
+            <div class="column"><dt class="column__lead">Ek</dt><dd>Gerçek dosya türü, çift uzantı, makro ve tarayıcı sonuçları.</dd></div>
+          </dl>
+        </section>
+        <div class="empty-cta">
+          <button type="button" class="btn btn--primary" id="ornek-dene">Sahte banka örneğini analiz et</button>
+          <p class="hint">Kendi mailiniz için üstteki alanı kullanın.</p>
         </div>
       </div>
-    </section>
+    </div>
   </main>
 
-  <template id="t-skeleton">
-    <div class="skeleton" aria-hidden="true">
-      <div class="skeleton__bar skeleton__bar--wide"></div>
-      <div class="skeleton__bar"></div>
-      <div class="skeleton__bar skeleton__bar--short"></div>
-      <div class="skeleton__bar"></div>
+  <footer class="page-foot">
+    <div class="wrap page-foot__inner">
+      <ul class="status" id="durum" aria-label="Servis durumu"></ul>
+      <p class="page-foot__model" id="model-bilgisi"></p>
+      <p class="page-foot__privacy" id="gizlilik-metni">Yapıştırılan mail sunucuda saklanmaz. Bağlantılar açılmaz ve indirilmez. VirusTotal'a dosya yüklenmez.</p>
+      <fieldset class="theme" id="tema">
+        <legend class="visually-hidden">Tema</legend>
+        <input type="radio" name="tema" id="tema-sistem" value="system" checked>
+        <label for="tema-sistem">Sistem</label>
+        <input type="radio" name="tema" id="tema-acik" value="light">
+        <label for="tema-acik">Açık</label>
+        <input type="radio" name="tema" id="tema-koyu" value="dark">
+        <label for="tema-koyu">Koyu</label>
+      </fieldset>
     </div>
-    <p class="visually-hidden">Analiz ediliyor.</p>
-  </template>
+  </footer>
 </body>
 </html>

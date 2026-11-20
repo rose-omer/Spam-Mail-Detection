@@ -15,9 +15,7 @@
   const keyField = $("anahtar-alani");
   const keyInput = $("api-anahtari");
   const result = $("sonuc");
-  const resultHeading = $("sonuc-baslik");
   const KEY_STORAGE = "spammaild.apiKey";
-  const DEFAULT_DROP_TEXT = fileStatus.textContent;
 
   let selectedFile = null;
   let config = null;
@@ -25,32 +23,31 @@
 
   const LABELS = {
     band: { clean: "Temiz", suspicious: "Şüpheli", spam: "Spam / phishing" },
-    bandIcon: { clean: "i-check", suspicious: "i-alert", spam: "i-x" },
     source: { content: "İçerik", auth: "Kimlik", url: "URL", attachment: "Ek" },
     auth: {
-      pass: ["geçti", "pass", "i-check"],
-      fail: ["başarısız", "fail", "i-x"],
-      softfail: ["zayıf başarısız", "warn", "i-alert"],
-      neutral: ["nötr", "none", "i-minus"],
-      none: ["yok", "none", "i-minus"],
-      policy: ["politika", "warn", "i-alert"],
-      temperror: ["geçici hata", "warn", "i-alert"],
-      permerror: ["kalıcı hata", "warn", "i-alert"],
-      unknown: ["bilinmiyor", "none", "i-help"],
+      pass: ["geçti", "pass"],
+      fail: ["başarısız", "fail"],
+      softfail: ["zayıf başarısız", "warn"],
+      neutral: ["nötr", "none"],
+      none: ["yok", "none"],
+      policy: ["politika", "warn"],
+      temperror: ["geçici hata", "warn"],
+      permerror: ["kalıcı hata", "warn"],
+      unknown: ["bilinmiyor", "none"],
     },
     scan: {
-      clean: ["temiz", "pass", "i-check"],
-      infected: ["zararlı", "fail", "i-x"],
-      unknown: ["bilinmiyor", "warn", "i-help"],
-      error: ["hata", "warn", "i-alert"],
-      skipped: ["taranmadı", "none", "i-minus"],
+      clean: ["temiz", "pass"],
+      infected: ["zararlı", "fail"],
+      unknown: ["bilinmiyor", "warn"],
+      error: ["hata", "warn"],
+      skipped: ["taranmadı", "none"],
     },
     reputation: {
-      malicious: ["zararlı listede", "fail", "i-x"],
-      not_listed: ["listede yok", "pass", "i-check"],
-      unknown: ["bilinmiyor", "warn", "i-help"],
-      error: ["hata", "warn", "i-alert"],
-      skipped: ["sorgulanmadı", "none", "i-minus"],
+      malicious: ["zararlı listede", "fail"],
+      not_listed: ["listede yok", "pass"],
+      unknown: ["bilinmiyor", "warn"],
+      error: ["hata", "warn"],
+      skipped: ["sorgulanmadı", "none"],
     },
     urlFlag: {
       text_mismatch: "Metin ve hedef farklı",
@@ -70,7 +67,21 @@
     language: { tr: "Türkçe", en: "İngilizce", unknown: "belirlenemedi" },
   };
 
+  // Eylem önerisi bilerek genel: belirli kuruma, numaraya ya da adıma yönlendirmez.
+  const ADVICE = {
+    spam: "Bağlantılara tıklamayın, ekleri açmayın. Mail bir kurum adına geliyorsa kuruma kendi bildiğiniz bir kanaldan ulaşın.",
+    suspicious: "Bağlantı ve eklerde dikkatli olun. Emin değilseniz gönderene başka bir kanaldan sorun.",
+    clean: "Belirgin bir risk bulunmadı. Skor bir garanti değildir; beklemediğiniz istekleri yine de doğrulayın.",
+  };
+  const COUNT_WORDS = ["", "Bir", "İki", "Üç"];
+  const BANDS = [
+    ["clean", "Temiz 0–34"],
+    ["suspicious", "Şüpheli 35–64"],
+    ["spam", "Spam / phishing 65–100"],
+  ];
+
   const numberTr = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 });
+  const impactTr = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   // ---- küçük DOM yardımcıları ----
   function el(tag, attrs = {}, children = []) {
@@ -79,7 +90,7 @@
       if (value === undefined || value === null || value === false) continue;
       if (key === "text") node.textContent = value;
       else if (key === "class") node.className = value;
-      else if (key.startsWith("data-") || key.startsWith("aria-") || key === "role" || key === "id" || key === "tabindex" || key === "scope") {
+      else if (key.startsWith("data-") || key.startsWith("aria-") || key === "role" || key === "id" || key === "tabindex" || key === "lang") {
         node.setAttribute(key, String(value));
       } else node[key] = value;
     }
@@ -90,26 +101,28 @@
     return node;
   }
 
-  function icon(name, extraClass = "") {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", `icon ${extraClass}`.trim());
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("focusable", "false");
-    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", `#${name}`);
-    svg.append(use);
-    return svg;
-  }
-
-  function stateTag(map, value) {
-    const [label, tone, iconName] = map[value] || map.unknown;
-    return el("span", { class: "state", "data-tone": tone }, [icon(iconName), label]);
+  function stateText(map, value) {
+    const [label, tone] = map[value] || map.unknown;
+    return el("span", { "data-tone": tone, text: label });
   }
 
   function formatBytes(bytes) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${numberTr.format(bytes / 1024)} KB`;
     return `${numberTr.format(bytes / (1024 * 1024))} MB`;
+  }
+
+  function impactInfo(impact) {
+    const dir = impact > 0.05 ? "up" : impact < -0.05 ? "down" : "flat";
+    const text = `${impact > 0 ? "+" : ""}${impactTr.format(impact)}`;
+    const meaning = dir === "up" ? "riski artırıyor" : dir === "down" ? "riski azaltıyor" : "etkisiz";
+    return { dir, text, meaning };
+  }
+
+  // "Spam / phishing" büyük harfe çevrilirken İngilizce sözcük Türkçe "İ" almasın.
+  function bandLabel(band) {
+    if (band === "spam") return ["Spam / ", el("span", { lang: "en", text: "phishing" })];
+    return LABELS.band[band] || band;
   }
 
   // ---- anahtar saklama (yalnız bu sekme) ----
@@ -143,33 +156,49 @@
     }
     if (!config.model.available) chips.push({ text: "İçerik modeli yüklenemedi", tone: "warn" });
     renderStatus(chips);
+    renderModel(config.model, null);
 
     const urlNote = config.url_reputation_enabled
       ? " Bağlantı adresleri (# sonrası hariç) itibar sorgusu için URLhaus'a ya da yerel listeye gönderilir; adresteki sorgu parametreleri de gider."
       : "";
     if (config.vt_upload) {
-      const privacy = $("gizlilik");
-      privacy.dataset.tone = "danger";
-      $("gizlilik-metni").textContent =
-        "Dikkat: VirusTotal'da kaydı olmayan ekler VirusTotal'a yüklenir ve VT topluluğuna açılır. Kişisel veri içeren mailleri göndermeyin. Mail metni sunucuda saklanmaz." + urlNote;
+      const warning = "Dikkat: VirusTotal'da kaydı olmayan ekler VirusTotal'a yüklenir ve VT topluluğuna açılır. Kişisel veri içeren mailleri göndermeyin.";
+      const upload = $("yukleme-uyarisi");
+      upload.textContent = warning;
+      upload.hidden = false;
+      $("gizlilik-metni").textContent = `${warning} Mail metni sunucuda saklanmaz.${urlNote}`;
     } else if (urlNote) {
       $("gizlilik-metni").textContent += urlNote;
     }
   }
 
+  function renderStatus(chips) {
+    $("durum").replaceChildren(
+      ...chips.map((chip) =>
+        el("li", {
+          "data-on": chip.on === undefined ? null : String(chip.on),
+          "data-tone": chip.tone,
+          text: chip.on === undefined ? chip.text : `${chip.text} ${chip.on ? "açık" : "kapalı"}`,
+        }),
+      ),
+    );
+  }
+
+  function renderModel(model, language) {
+    const parts = [el("span", { text: `Model ${model.available ? model.name : "yüklenemedi"} ${model.version}` })];
+    if (language) parts.push(el("span", { text: `Dil ${LABELS.language[language] || language}` }));
+    $("model-bilgisi").replaceChildren(...parts);
+  }
+
   // ---- tema ----
   const THEME_STORAGE = "spammaild.theme";
   const themeInputs = document.querySelectorAll('input[name="tema"]');
-  function currentTheme() {
-    const value = document.documentElement.dataset.theme;
-    return value === "light" || value === "dark" ? value : "system";
-  }
+  const currentTheme = document.documentElement.dataset.themePref || "system";
   for (const input of themeInputs) {
-    input.checked = input.value === currentTheme();
+    input.checked = input.value === currentTheme;
     input.addEventListener("change", () => {
       if (!input.checked) return;
-      if (input.value === "system") delete document.documentElement.dataset.theme;
-      else document.documentElement.dataset.theme = input.value;
+      if (window.spammaildTheme) window.spammaildTheme(input.value);
       try {
         if (input.value === "system") localStorage.removeItem(THEME_STORAGE);
         else localStorage.setItem(THEME_STORAGE, input.value);
@@ -177,28 +206,12 @@
     });
   }
 
-  function renderStatus(chips) {
-    const list = $("durum");
-    list.replaceChildren(
-      ...chips.map((chip) =>
-        el("li", {}, [
-          el("span", {
-            class: "status-chip",
-            "data-on": chip.on === undefined ? null : String(chip.on),
-            "data-tone": chip.tone,
-            text: chip.on === undefined ? chip.text : `${chip.text} ${chip.on ? "açık" : "kapalı"}`,
-          }),
-        ]),
-      ),
-    );
-  }
-
   // ---- dosya seçimi ----
   function setFile(file) {
     selectedFile = file;
-    dropZone.dataset.hasFile = String(Boolean(file));
     clearButton.hidden = !file;
-    fileStatus.textContent = file ? `${file.name} (${formatBytes(file.size)})` : DEFAULT_DROP_TEXT;
+    fileStatus.textContent = file ? `Seçili dosya: ${file.name} (${formatBytes(file.size)}).` : "";
+    fileStatus.hidden = !file;
     textarea.disabled = Boolean(file);
     if (file) clearSamplePressed();
   }
@@ -289,7 +302,7 @@
     const raw = textarea.value;
     if (!selectedFile && !raw.trim()) {
       showFormError("Önce ham maili yapıştırın ya da bir .eml dosyası seçin.");
-      (selectedFile ? pickButton : textarea).focus();
+      textarea.focus();
       return;
     }
     if (config && config.auth_required && !keyInput.value.trim()) {
@@ -313,12 +326,14 @@
     }
 
     setBusy(true);
-    result.replaceChildren($("t-skeleton").content.cloneNode(true));
+    renderLoading();
+    let focusKey = false;
     try {
       const response = await fetch("/v1/analyze", { method: "POST", headers, body });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         renderError(response.status, payload);
+        focusKey = response.status === 401;
       } else {
         renderResult(payload);
       }
@@ -327,7 +342,69 @@
     } finally {
       setBusy(false);
     }
-    resultHeading.focus({ preventScroll: window.matchMedia("(min-width: 960px)").matches });
+    if (focusKey) keyInput.focus();
+    else $("sonuc-baslik").focus({ preventScroll: true });
+    if (!focusKey) $("sonuc-baslik").scrollIntoView({ block: "nearest" });
+  }
+
+  // ---- karar bandı (her durumda aynı iskelet) ----
+  // Canlı bölge yok: analizden sonra odak başlığa geçer ve ekran okuyucu başlığın adını bir kez okur.
+  // `label` başlığın erişilebilir adıdır (karar ve skor tek cümlede).
+  function verdict({ state, band, from, title, label, quiet, score, advice, activeBand }) {
+    const row = [];
+    if (score !== undefined) {
+      row.push(el("p", { class: "score" }, [
+        el("span", { class: "score__value", text: String(score) }),
+        el("span", { class: "score__max", text: "/ 100 risk" }),
+      ]));
+    }
+    if (advice) row.push(el("div", { class: "verdict__advice" }, [].concat(advice).map((line) => el("p", { text: line }))));
+
+    const scaleAttrs = activeBand
+      ? {
+          class: "scale",
+          role: "meter",
+          "aria-label": "Risk skoru",
+          "aria-valuemin": 0,
+          "aria-valuemax": 100,
+          "aria-valuenow": score,
+          "aria-valuetext": `${score} / 100, ${LABELS.band[activeBand] || activeBand}`,
+        }
+      : { class: "scale", "aria-hidden": "true" };
+    const scaleTag = activeBand ? "div" : "ol";
+    const itemTag = activeBand ? "span" : "li";
+    const scale = el(scaleTag, scaleAttrs,
+      BANDS.map(([key, label]) => el(itemTag, { "data-active": String(key === activeBand), text: label })));
+
+    return el("section", {
+      class: `verdict${state === "result" ? " verdict--reveal" : ""}`,
+      "data-state": state,
+      "data-band": band,
+      "aria-labelledby": "sonuc-baslik",
+    }, el("div", { class: "wrap" }, [
+      from ? el("p", { class: "verdict__from", text: from }) : null,
+      el("h2", {
+        id: "sonuc-baslik",
+        class: `verdict__title${quiet ? " verdict__title--state" : ""}`,
+        tabindex: -1,
+        "aria-label": label,
+      }, title),
+      row.length ? el("div", { class: "verdict__row" }, row) : null,
+      state === "error" ? null : scale,
+    ]));
+  }
+
+  function renderLoading() {
+    result.replaceChildren(
+      verdict({
+        state: "loading",
+        from: selectedFile ? selectedFile.name : "Mail okunuyor.",
+        title: "Analiz ediliyor",
+        quiet: true,
+        advice: "İçerik, kimlik doğrulama, bağlantılar ve ekler ayrı ayrı puanlanıyor.",
+      }),
+      el("div", { class: "wrap skeleton", "aria-hidden": "true" }, [el("span"), el("span"), el("span"), el("span")]),
+    );
   }
 
   function renderError(status, payload) {
@@ -340,233 +417,201 @@
       429: ["Çok fazla istek", "Bir dakika bekleyip yeniden deneyin."],
     };
     const [title, recovery] = titles[status] || ["Analiz tamamlanamadı", "Biraz sonra yeniden deneyin."];
-    result.replaceChildren(
-      el("div", { class: "alert", role: "alert" }, [
-        icon("i-alert"),
-        el("div", { class: "alert__body" }, [
-          el("p", { class: "alert__title", text: title }),
-          message ? el("p", { text: message }) : null,
-          el("p", { text: recovery }),
-        ]),
-      ]),
-    );
-    if (status === 401) keyInput.focus();
+    const section = verdict({
+      state: "error",
+      from: status ? `Sunucu yanıtı ${status}.` : "Yanıt alınamadı.",
+      title,
+      label: `Hata: ${title}`,
+      quiet: true,
+      advice: message ? [message, recovery] : recovery,
+    });
+    // 401'de odak anahtar alanına gider, başlığa değil; hatayı yalnız bu durumda duyur.
+    if (status === 401) section.setAttribute("role", "alert");
+    result.replaceChildren(section);
+  }
+
+  function formatSender(message) {
+    if (!message.sender) return "Gönderen bilinmiyor";
+    return message.sender_name ? `${message.sender_name} <${message.sender}>` : message.sender;
   }
 
   // ---- sonuç ----
   function renderResult(data) {
-    const container = el("div", { class: "result result__appear" }, [
-      renderSummary(data),
-      renderAuth(data.auth),
-      renderReasons(data.reasons),
-      renderUrls(data.urls),
-      renderAttachments(data.attachments),
-      renderFooter(data),
-    ]);
-    result.replaceChildren(container);
-    const marker = container.querySelector(".ruler__marker");
-    marker.getBoundingClientRect(); // başlangıç konumunu uygula; geçiş 0'dan başlasın
-    marker.style.setProperty("--pos", String(data.risk));
+    const from = `${formatSender(data.message)}. Konu: ${data.message.subject || "konu yok"}`;
+    const lead = leadReasons(data.reasons);
+    const rest = data.reasons.slice(lead.length);
+    result.replaceChildren(
+      verdict({
+        state: "result",
+        band: data.band,
+        from,
+        title: bandLabel(data.band),
+        label: `Sonuç: ${LABELS.band[data.band] || data.band}, risk ${data.risk} / 100`,
+        score: data.risk,
+        advice: ADVICE[data.band],
+        activeBand: data.band,
+      }),
+      el("div", { class: "wrap findings" }, [
+        renderLead(lead, data.band),
+        el("div", { class: "split" }, [
+          renderRest(rest),
+          el("div", { class: "split__side" }, [
+            renderAuth(data.auth),
+            renderUrls(data.urls),
+            renderAttachments(data.attachments),
+          ]),
+        ]),
+      ]),
+    );
+    renderModel(data.model, data.message.language);
   }
 
-  function renderSummary(data) {
-    const segments = [
-      ["clean", "ruler__seg--clean"],
-      ["suspicious", "ruler__seg--warn"],
-      ["spam", "ruler__seg--risk"],
-    ];
-    const scale = el("div", { class: "ruler__scale", "aria-hidden": "true" });
-    for (const value of [0, 35, 65, 100]) {
-      const tick = el("span", { text: String(value) });
-      tick.style.left = `${value}%`;
-      scale.append(tick);
+  const LEAD_COUNT = 3;
+  const LEAD_MIN_IMPACT = 0.5;
+
+  // Sunucu nedenleri etki büyüklüğüne göre sıralı gönderir.
+  function leadReasons(reasons) {
+    let count = 0;
+    while (count < Math.min(LEAD_COUNT, reasons.length) && Math.abs(reasons[count].impact) >= LEAD_MIN_IMPACT) count += 1;
+    if (count === 0) count = Math.min(LEAD_COUNT, reasons.length);
+    return reasons.slice(0, count);
+  }
+
+  function renderLead(lead, band) {
+    const word = COUNT_WORDS[lead.length] || String(lead.length);
+    const heading = band === "spam" ? `${word} neden yeter` : `Kararı belirleyen ${word.toLocaleLowerCase("tr")} neden`;
+    return el("section", { "aria-labelledby": "h-neden" }, [
+      el("h3", { id: "h-neden", class: "display-head", text: heading }),
+      el("ul", { class: "columns" }, lead.map((reason) => {
+        const impact = impactInfo(reason.impact);
+        const state = LABELS.status[reason.status];
+        return el("li", { class: "column" }, [
+          el("p", { class: "column__lead", "data-dir": impact.dir }, [
+            el("span", { "aria-hidden": "true", text: impact.text }),
+            el("span", { class: "visually-hidden", text: `Etki ${impact.text}, ${impact.meaning}.` }),
+            el("span", { class: "column__source", text: LABELS.source[reason.source] || reason.source }),
+          ]),
+          el("p", { class: "column__text" }, [
+            reason.text,
+            state ? el("span", { class: "state-note", text: state }) : null,
+          ]),
+        ]);
+      })),
+    ]);
+  }
+
+  function renderRest(rest) {
+    const note = el("p", {
+      class: "note",
+      text: "Etki, nedenin skora katkısıdır. Artı değer riski yükseltir, eksi değer düşürür. +1 kabaca spam/temiz oranını 2,7 kat artırır.",
+    });
+    if (!rest.length) {
+      return el("section", { class: "split__main", "aria-labelledby": "h-diger" }, [
+        el("h3", { id: "h-diger", text: "Diğer bulgular" }),
+        el("p", { class: "empty-line", text: "Başka bulgu yok." }),
+        note,
+      ]);
     }
-    return el("section", { class: "summary", "aria-label": "Özet" }, [
-      el("div", { class: "summary__head" }, [
-        el("p", { class: "score" }, [
-          el("span", { class: "score__value", text: String(data.risk) }),
-          el("span", { class: "score__max", text: "/ 100 risk" }),
-        ]),
-        el("p", { class: "band", "data-band": data.band }, [
-          icon(LABELS.bandIcon[data.band] || "i-help"),
-          LABELS.band[data.band] || data.band,
-        ]),
-      ]),
-      el("div", {
-        class: "ruler",
-        role: "meter",
-        "aria-valuemin": 0,
-        "aria-valuemax": 100,
-        "aria-valuenow": data.risk,
-        "aria-valuetext": `${data.risk} / 100, ${LABELS.band[data.band] || data.band}`,
-        "aria-label": "Risk skoru",
-      }, [
-        el("div", { class: "ruler__track" },
-          segments.map(([band, cls]) => el("span", { class: `ruler__seg ${cls}`, "data-active": String(band === data.band) }))),
-        el("span", { class: "ruler__marker" }),
-        scale,
-      ]),
-      el("dl", { class: "meta" }, [
-        el("dt", { text: "Gönderen" }),
-        el("dd", { text: formatSender(data.message) }),
-        el("dt", { text: "Konu" }),
-        el("dd", { text: data.message.subject || "konu yok" }),
-      ]),
+    return el("section", { class: "split__main", "aria-labelledby": "h-diger" }, [
+      el("h3", { id: "h-diger", text: `Diğer ${rest.length} bulgu` }),
+      el("ul", { class: "rest" }, rest.map((reason) => {
+        const impact = impactInfo(reason.impact);
+        const state = LABELS.status[reason.status];
+        return el("li", {}, [
+          el("span", { class: "rest__text" }, [
+            el("span", { class: "rest__source", text: `${LABELS.source[reason.source] || reason.source}. ` }),
+            reason.text,
+            state ? el("span", { class: "state-note", text: state }) : null,
+          ]),
+          el("span", { class: "impact", "data-dir": impact.dir }, [
+            el("span", { "aria-hidden": "true", text: impact.text }),
+            el("span", { class: "visually-hidden", text: `Etki ${impact.text}, ${impact.meaning}.` }),
+          ]),
+        ]);
+      })),
+      note,
     ]);
-  }
-
-  function formatSender(message) {
-    if (!message.sender) return "bilinmiyor";
-    return message.sender_name ? `${message.sender_name} <${message.sender}>` : message.sender;
   }
 
   function renderAuth(auth) {
     const methods = ["spf", "dkim", "dmarc"];
-    const badges = methods.map((method) => {
-      const [label, tone, iconName] = LABELS.auth[auth[method].result] || LABELS.auth.unknown;
-      return el("span", { class: "badge", "data-tone": tone }, [
-        icon(iconName),
-        el("span", { class: "badge__name", text: method.toUpperCase() }),
-        el("span", { text: label }),
+    const cells = methods.map((method) => {
+      const [label, tone] = LABELS.auth[auth[method].result] || LABELS.auth.unknown;
+      return el("div", {}, [
+        el("dt", { text: method.toUpperCase() }),
+        el("dd", { "data-tone": tone, text: label }),
       ]);
     });
     // Kaynak bilgisi ipucunda saklanmaz; her cihazda görünür kısa notlar olarak yazılır.
     const notes = [];
     const sources = [...new Set(methods.map((method) => auth[method].source).filter(Boolean))];
-    for (const source of sources) {
-      notes.push(el("p", {}, ["Kaynak: ", el("code", { text: source })]));
-    }
+    if (sources.length) notes.push(el("p", { class: "note" }, ["Kaynak: ", el("code", { text: sources.join(", ") }), "."]));
     if (!auth.trusted_authserv_id) {
-      notes.push(el("p", { text: "TRUSTED_AUTHSERV_ID tanımlı değil; sonuçlar okunmadı." }));
+      notes.push(el("p", { class: "note", text: "Kimlik doğrulama sonuçları okunamadı: sunucu güvenilen başlık kaynağı için ayarlanmamış." }));
     } else {
       const missing = methods.filter((method) => !auth[method].source).map((m) => m.toUpperCase());
       if (missing.length === methods.length) {
-        notes.push(el("p", { text: `En üstteki Authentication-Results başlığı güvenilen ${auth.trusted_authserv_id} sunucusundan değil ya da yok.` }));
+        notes.push(el("p", { class: "note", text: `En üstteki Authentication-Results başlığı güvenilen ${auth.trusted_authserv_id} sunucusundan değil ya da yok.` }));
       } else if (missing.length) {
-        notes.push(el("p", { text: `${auth.trusted_authserv_id} başlığında ${missing.join(", ")} sonucu yok.` }));
+        notes.push(el("p", { class: "note", text: `${auth.trusted_authserv_id} başlığında ${missing.join(", ")} sonucu yok.` }));
       }
     }
     return el("section", { "aria-labelledby": "h-kimlik" }, [
       el("h3", { id: "h-kimlik", text: "Kimlik doğrulama" }),
-      el("div", { class: "badges" }, badges),
-      el("div", { class: "auth-notes" }, notes),
+      el("dl", { class: "auth" }, cells),
+      ...notes,
     ]);
   }
 
-  const LEAD_COUNT = 3;
-  const LEAD_MIN_IMPACT = 0.5;
-  const REST_OPEN_MAX = 4;
-
-  function reasonItem(reason, maxImpact) {
-    const dir = reason.impact > 0.05 ? "up" : reason.impact < -0.05 ? "down" : "flat";
-    const dirText = dir === "up" ? "riski artırıyor" : dir === "down" ? "riski azaltıyor" : "etkisiz";
-    const impactText = `${reason.impact > 0 ? "+" : ""}${numberTr.format(reason.impact)}`;
-    const state = LABELS.status[reason.status];
-    const meter = el("span", { class: "reason__meter", "data-dir": dir, "aria-hidden": "true" }, el("span"));
-    meter.firstChild.style.setProperty("--w", String(maxImpact ? (Math.abs(reason.impact) / maxImpact) * 100 : 0));
-    return el("li", { class: "reason" }, [
-      el("span", { class: "reason__source", text: LABELS.source[reason.source] || reason.source }),
-      el("p", { class: "reason__text" }, [
-        reason.text,
-        state ? el("span", { class: "reason__state", text: state }) : null,
-      ]),
-      meter,
-      el("span", { class: "reason__impact", "data-dir": dir, title: dirText }, [
-        dir === "flat" ? null : icon(dir === "up" ? "i-up" : "i-down"),
-        el("span", { "aria-hidden": "true", text: impactText }),
-        el("span", { class: "visually-hidden", text: `Etki ${impactText}, ${dirText}` }),
-      ]),
-    ]);
-  }
-
-  function renderReasons(reasons) {
-    // Sunucu nedenleri etki büyüklüğüne göre sıralı gönderir.
-    const maxImpact = Math.max(0, ...reasons.map((reason) => Math.abs(reason.impact)));
-    let leadCount = 0;
-    while (
-      leadCount < Math.min(LEAD_COUNT, reasons.length) &&
-      Math.abs(reasons[leadCount].impact) >= LEAD_MIN_IMPACT
-    ) leadCount += 1;
-    if (leadCount === 0) leadCount = Math.min(LEAD_COUNT, reasons.length);
-    const lead = reasons.slice(0, leadCount);
-    const rest = reasons.slice(leadCount);
-
-    const children = [
-      el("div", { class: "section-head" }, [
-        el("h3", { id: "h-nedenler", text: "Nedenler" }),
-        el("p", {
-          class: "hint",
-          id: "etki-aciklama",
-          text: "Etki, nedenin skora katkısıdır. Artı değer riski yükseltir, eksi değer düşürür. Etkiler toplanıp 0–100 skora çevrilir; +1 kabaca spam/temiz oranını 2,7 kat artırır. Çubuk, en güçlü nedene göre boylanır.",
-        }),
-      ]),
-      el("ul", { class: "reasons reasons--lead", "aria-label": "Skoru en çok etkileyen nedenler", "aria-describedby": "etki-aciklama" },
-        lead.map((reason) => reasonItem(reason, maxImpact))),
-    ];
-    if (rest.length) {
-      const details = el("details", { class: "more" }, [
-        el("summary", {}, [`Diğer ${rest.length} bulgu`, icon("i-chevron")]),
-        el("ul", { class: "reasons reasons--rest" }, rest.map((reason) => reasonItem(reason, maxImpact))),
-      ]);
-      details.open = rest.length <= REST_OPEN_MAX;
-      children.push(details);
-    }
-    return el("section", { "aria-labelledby": "h-nedenler" }, children);
-  }
-
-  function flagList(flags, labels) {
-    if (!flags.length) return el("span", { class: "muted", text: "yok" });
-    return el("span", { class: "flags" }, flags.map((flag) => el("span", { class: "flag", text: labels[flag] || flag })));
-  }
-
-  function table(headings, rows) {
-    return el("div", { class: "table-wrap" }, el("table", { class: "table" }, [
-      el("thead", {}, el("tr", {}, headings.map((heading) => el("th", { scope: "col", text: heading })))),
-      el("tbody", {}, rows.map((cells) =>
-        el("tr", {}, cells.map((cell, index) => el("td", { "data-label": headings[index] }, cell))))),
-    ]));
+  function flagText(flags, labels) {
+    return flags.map((flag) => `${labels[flag] || flag}.`).join(" ");
   }
 
   function renderUrls(urls) {
-    const body = urls.length
-      ? table(
-          ["Görünen metin", "Gerçek hedef", "Alan adı", "İşaretler", "İtibar"],
-          urls.map((url) => [
-            url.text ? url.text : el("span", { class: "muted", text: "düz metin" }),
-            el("span", { class: "mono", text: url.href }),
-            url.domain || url.host || "–",
-            flagList(url.flags, LABELS.urlFlag),
-            stateTag(LABELS.reputation, url.reputation),
+    const children = [el("h3", { id: "h-url", text: "Bağlantılar" })];
+    if (!urls.length) {
+      children.push(el("p", { class: "empty-line", text: "Mailde bağlantı yok." }));
+    } else {
+      children.push(el("dl", { class: "links" }, urls.map((url) => {
+        const domain = url.domain || url.host;
+        return el("div", {}, [
+          el("dt", { text: url.text || "Düz metin bağlantı" }),
+          el("dd", {}, [
+            el("p", { class: `mono${url.flags.length ? " flagged" : ""}`, text: url.href }),
+            el("p", { class: "detail" }, [
+              domain ? `Alan adı ${domain}. ` : null,
+              url.flags.length ? `${flagText(url.flags, LABELS.urlFlag)} ` : null,
+              "İtibar: ",
+              stateText(LABELS.reputation, url.reputation),
+              ".",
+            ]),
           ]),
-        )
-      : el("p", { class: "section-empty", text: "Mailde bağlantı yok." });
-    return el("section", { "aria-labelledby": "h-url" }, [el("h3", { id: "h-url", text: "Bağlantılar" }), body]);
+        ]);
+      })));
+      if (config && config.demo_mode) children.push(el("p", { class: "note", text: "İtibar sorgulanmadı: demo modunda dış servisler kapalı." }));
+    }
+    return el("section", { "aria-labelledby": "h-url" }, children);
   }
 
   function renderAttachments(files) {
-    const body = files.length
-      ? table(
-          ["Ad", "Tür", "Boyut", "İşaretler", "ClamAV", "VirusTotal"],
-          files.map((file) => [
-            el("span", { class: "mono", text: file.filename }),
-            `${file.detected_type} (${file.content_type})`,
-            formatBytes(file.size),
-            flagList(file.flags, LABELS.fileFlag),
-            stateTag(LABELS.scan, file.clamav.status),
-            stateTag(LABELS.scan, file.virustotal.status),
-          ]),
-        )
-      : el("p", { class: "section-empty", text: "Mailde ek yok." });
-    return el("section", { "aria-labelledby": "h-ek" }, [el("h3", { id: "h-ek", text: "Ekler" }), body]);
-  }
-
-  function renderFooter(data) {
-    const model = data.model;
-    return el("footer", { class: "footer-meta" }, [
-      el("span", {}, ["Model ", el("strong", { text: model.available ? model.name : "yüklenemedi" })]),
-      el("span", {}, ["Sürüm ", el("strong", { text: model.version })]),
-      el("span", {}, ["Dil ", el("strong", { text: LABELS.language[data.message.language] || data.message.language })]),
-    ]);
+    const children = [el("h3", { id: "h-ek", text: files.length > 1 ? `Ekler (${files.length})` : "Ek" })];
+    if (!files.length) {
+      children.push(el("p", { class: "empty-line", text: "Mailde ek yok." }));
+    } else {
+      children.push(el("ul", { class: "files" }, files.map((file) => el("li", {}, [
+        el("p", { class: `mono${file.flags.length ? " flagged" : ""}`, text: file.filename }),
+        el("p", {}, [
+          `${file.detected_type} (${file.content_type}), ${formatBytes(file.size)}. `,
+          file.flags.length ? `${flagText(file.flags, LABELS.fileFlag)} ` : null,
+          "ClamAV: ",
+          stateText(LABELS.scan, file.clamav.status),
+          ". VirusTotal: ",
+          stateText(LABELS.scan, file.virustotal.status),
+          ".",
+        ]),
+      ]))));
+    }
+    return el("section", { "aria-labelledby": "h-ek" }, children);
   }
 
   loadConfig();

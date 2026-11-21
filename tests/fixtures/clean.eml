@@ -1,0 +1,20 @@
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@ornekfirma.com.tr header.s=s1 header.b=AbCd;
+       spf=pass (google.com: domain of ayse@ornekfirma.com.tr designates 203.0.113.5 as permitted sender) smtp.mailfrom=ayse@ornekfirma.com.tr;
+       dmarc=pass (p=QUARANTINE) header.from=ornekfirma.com.tr
+From: Ayşe Yılmaz <ayse@ornekfirma.com.tr>
+To: mehmet@ornekfirma.com.tr
+Subject: Yarınki proje toplantısı
+Date: Thu, 19 Nov 2026 10:12:00 +0300
+Message-ID: <a1@ornekfirma.com.tr>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Merhaba Mehmet,
+
+Yarınki toplantı saat 14:00'te üçüncü kattaki salonda. Sunum dosyasını
+toplantıdan önce paylaşacağım. Gündem: sprint değerlendirmesi ve test planı.
+
+Görüşmek üzere,
+Ayşe

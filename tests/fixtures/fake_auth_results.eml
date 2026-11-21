@@ -1,0 +1,12 @@
+Authentication-Results: mx.google.com;
+       spf=fail (google.com: domain of info@paypal.com does not designate 198.51.100.7 as permitted sender) smtp.mailfrom=info@paypal.com;
+       dkim=none;
+       dmarc=fail (p=REJECT) header.from=paypal.com
+Authentication-Results: mx.google.com; spf=pass smtp.mailfrom=paypal.com; dkim=pass header.d=paypal.com; dmarc=pass header.from=paypal.com
+From: PayPal <info@paypal.com>
+To: kurban@example.com
+Subject: Account notice
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Your account has been limited. Please confirm your details.

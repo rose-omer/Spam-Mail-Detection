@@ -1,0 +1,23 @@
+Authentication-Results: mx.google.com;
+       spf=softfail (google.com: domain of transitioning kampanya@super-firsat.example does not designate 198.51.100.20 as permitted sender) smtp.mailfrom=kampanya@super-firsat.example;
+       dkim=none;
+       dmarc=none
+From: =?utf-8?q?S=C3=BCper_F=C4=B1rsat?= <kampanya@super-firsat.example>
+To: alici@example.com
+Subject: =?utf-8?q?Tebrikler!_iPhone_kazand=C4=B1n=C4=B1z?=
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="s1"
+
+--s1
+Content-Type: text/plain; charset="utf-8"
+
+Tebrikler! Büyük ödülü kazandınız. Hemen tıklayın ve ücretsiz hediyenizi alın.
+Bu fırsat yalnızca bugün geçerli. Kampanya kodu: KAZAN2026
+
+--s1
+Content-Type: text/html; charset="utf-8"
+
+<p>Tebrikler! Büyük ödülü kazandınız.</p>
+<p>Hemen tıklayın ve ücretsiz hediyenizi alın. Bu fırsat yalnızca bugün geçerli.</p>
+<p><a href="https://bit.ly/3kazan26">Hediyeni hemen al</a></p>
+--s1--

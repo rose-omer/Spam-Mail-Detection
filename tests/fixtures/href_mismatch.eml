@@ -1,0 +1,17 @@
+From: Garanti BBVA <bildirim@garanti-guvenlik.example>
+To: kurban@example.com
+Subject: =?utf-8?q?Hesab=C4=B1n=C4=B1z_ask=C4=B1ya_al=C4=B1nd=C4=B1?=
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset="utf-8"
+
+Sayın müşterimiz, hesabınız askıya alındı. Kimlik doğrulaması için hemen tıklayın.
+
+--b1
+Content-Type: text/html; charset="utf-8"
+
+<p>Sayın müşterimiz, hesabınız askıya alındı.</p>
+<p><a href="http://garantibbva.com.tr.hesap-dogrula.example/giris">www.garantibbva.com.tr</a></p>
+--b1--

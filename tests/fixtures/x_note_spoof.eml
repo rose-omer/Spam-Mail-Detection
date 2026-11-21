@@ -1,0 +1,9 @@
+X-Note: spf=pass dkim=pass dmarc=pass
+Authentication-Results: attacker.example; spf=pass smtp.mailfrom=paypal.com; dkim=pass header.d=paypal.com; dmarc=pass header.from=paypal.com
+From: PayPal Service <service@paypa1-support.com>
+To: kurban@example.com
+Subject: Urgent: verify your account
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Dear customer, your account has been suspended. Verify your password immediately.

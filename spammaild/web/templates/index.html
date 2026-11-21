@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mail analizi – SpamMailD</title>
+  <link rel="icon" href="{{ url_for('static', path='favicon.svg') }}" type="image/svg+xml">
+  <link rel="preload" href="{{ url_for('static', path='fonts/big-shoulders-display-latin-900-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', path='fonts/archivo-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <script src="{{ url_for('static', path='theme.js') }}?v={{ version }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ version }}">
+  <script src="{{ url_for('static', path='app.js') }}?v={{ version }}" defer></script>
+</head>
+<body>
+  <a class="skip" href="#sonuc-baslik">Sonuca geç</a>
+
+  <header class="masthead" id="birakma-alani">
+    <div class="masthead__inner">
+      <form id="analiz-formu" class="intake" novalidate aria-labelledby="marka">
+        <h1 id="marka" class="brand">SpamMailD</h1>
+
+        <div class="intake__key" id="anahtar-alani" hidden>
+          <label for="api-anahtari">API anahtarı</label>
+          <input id="api-anahtari" name="api-anahtari" type="password" autocomplete="off" spellcheck="false" aria-describedby="anahtar-yardim">
+          <span class="visually-hidden" id="anahtar-yardim">Sunucu X-API-Key istiyor. Anahtar yalnız bu sekmede tutulur.</span>
+        </div>
+
+        <label for="ham-mail" class="visually-hidden">Ham maili yapıştır</label>
+        <textarea id="ham-mail" name="ham-mail" rows="1" spellcheck="false" aria-describedby="ham-yardim" placeholder="Ham maili başlıklarıyla yapıştırın"></textarea>
+
+        <input id="dosya" name="dosya" type="file" accept=".eml,message/rfc822" class="visually-hidden" tabindex="-1" aria-hidden="true">
+        <button type="button" class="btn" id="dosya-sec">.eml seç</button>
+        <button type="button" class="btn" id="dosya-kaldir" hidden>Dosyayı kaldır</button>
+        <button type="submit" class="btn btn--primary" id="analiz-et">Analiz et</button>
+        <a class="masthead__docs" href="/docs">API belgeleri</a>
+      </form>
+
+      <div class="masthead__sub">
+        <fieldset class="samples">
+          <legend>Örnek mail</legend>
+          <button type="button" class="btn btn--small" data-sample="temiz">Temiz</button>
+          <button type="button" class="btn btn--small" data-sample="spam">Spam</button>
+          <button type="button" class="btn btn--small" data-sample="sahte-banka">Sahte banka</button>
+        </fieldset>
+        <p class="hint" id="ham-yardim"><span id="dosya-durumu" hidden></span> Başlıklar gerekli. En çok <span id="azami-boyut">70</span> MB.<span class="hint__more"> Kimlik doğrulama sonuçları başlıklardan okunur. <span lang="en">.eml</span> dosyasını bu alana bırakabilirsiniz. Göndermek için Ctrl + Enter.</span></p>
+      </div>
+
+      <p class="form-error" id="form-hatasi" role="alert"></p>
+      <p class="upload-warning" id="yukleme-uyarisi" role="note" hidden></p>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div id="sonuc" aria-busy="false">
+      <section class="verdict" data-state="empty" aria-labelledby="sonuc-baslik">
+        <div class="wrap">
+          <p class="verdict__from">Henüz analiz yok.</p>
+          <h2 id="sonuc-baslik" class="verdict__title verdict__title--state" tabindex="-1">Mail bekleniyor</h2>
+          <div class="verdict__row">
+            <p class="verdict__advice">Maili yukarıdaki alana yapıştırın ya da <span lang="en">.eml</span> dosyası seçin. Bulgular tek bir 0–100 risk skorunda toplanır ve skor üç banttan birine düşer.</p>
+          </div>
+          <ol class="scale" aria-label="Risk bantları">
+            <li>Temiz 0–34</li>
+            <li>Şüpheli 35–64</li>
+            <li>Spam / phishing 65–100</li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="wrap findings">
+        <section aria-labelledby="h-bolumler">
+          <h3 id="h-bolumler" class="display-head">Mail dört bölümde puanlanır</h3>
+          <dl class="columns">
+            <div class="column"><dt class="column__lead">İçerik</dt><dd>Metin modelinin spam olasılığı ve öne çıkan terimler.</dd></div>
+            <div class="column"><dt class="column__lead">Kimlik</dt><dd>Güvenilen sunucunun SPF, DKIM ve DMARC sonuçları.</dd></div>
+            <div class="column"><dt class="column__lead">URL</dt><dd>Görünen metin ile gerçek hedef, IP adresi, punycode ve kısaltıcılar.</dd></div>
+            <div class="column"><dt class="column__lead">Ek</dt><dd>Gerçek dosya türü, çift uzantı, makro ve tarayıcı sonuçları.</dd></div>
+          </dl>
+        </section>
+        <div class="empty-cta">
+          <button type="button" class="btn btn--primary" id="ornek-dene">Sahte banka örneğini analiz et</button>
+          <p class="hint">Kendi mailiniz için üstteki alanı kullanın.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="page-foot">
+    <div class="wrap page-foot__inner">
+      <ul class="status" id="durum" aria-label="Servis durumu"></ul>
+      <p class="page-foot__model" id="model-bilgisi"></p>
+      <p class="page-foot__privacy" id="gizlilik-metni">Yapıştırılan mail sunucuda saklanmaz. Bağlantılar açılmaz ve indirilmez. VirusTotal'a dosya yüklenmez.</p>
+      <fieldset class="theme" id="tema">
+        <legend class="visually-hidden">Tema</legend>
+        <input type="radio" name="tema" id="tema-sistem" value="system" checked>
+        <label for="tema-sistem">Sistem</label>
+        <input type="radio" name="tema" id="tema-acik" value="light">
+        <label for="tema-acik">Açık</label>
+        <input type="radio" name="tema" id="tema-koyu" value="dark">
+        <label for="tema-koyu">Koyu</label>
+      </fieldset>
+    </div>
+  </footer>
+</body>
+</html>

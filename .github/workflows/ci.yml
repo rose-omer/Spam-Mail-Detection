@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.9"
       - run: uv sync --locked
@@ -32,7 +32,7 @@ jobs:
         python: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.9"
           python-version: ${{ matrix.python }}
@@ -62,7 +62,7 @@ jobs:
           --health-start-period 300s
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.9"
       - run: uv sync --locked
